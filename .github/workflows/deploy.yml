@@ -21,25 +21,47 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       
+      # 使用 Node.js 20（更稳定，兼容性更好）
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
           
+      # 设置 pnpm
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
         with:
           version: 8
           
-      - name: Install dependencies
-        run: pnpm install
+      # 清理缓存并安装依赖
+      - name: Clean install dependencies
+        run: |
+          # 清理 npm 缓存
+          npm cache clean --force
+          
+          # 清理 pnpm 缓存
+          pnpm store prune
+          
+          # 删除 node_modules 和 lock 文件重新安装
+          rm -rf node_modules
+          rm -f pnpm-lock.yaml
+          rm -f package-lock.json
+          
+          # 安装依赖
+          pnpm install --no-frozen-lockfile
+          
+          # 额外安装可能的缺失依赖
+          pnpm add -D @rollup/rollup-linux-x64-gnu
         
+      # 构建项目
       - name: Build
         run: pnpm build
         
+      # 配置 Pages
       - name: Setup Pages
         uses: actions/configure-pages@v3
         
+      # 上传产物
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
         with:
